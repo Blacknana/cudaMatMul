@@ -1,0 +1,10 @@
+/home/sunqianqi/MatMul/build/CMakeFiles/rebuild_cache.dir
+/home/sunqianqi/MatMul/build/CMakeFiles/MatMul_v1.dir
+/home/sunqianqi/MatMul/build/CMakeFiles/edit_cache.dir
+/home/sunqianqi/MatMul/build/CMakeFiles/MatMul_v2.dir
+/home/sunqianqi/MatMul/build/MatMulOnCPU/CMakeFiles/rebuild_cache.dir
+/home/sunqianqi/MatMul/build/MatMulOnCPU/CMakeFiles/MatMulOnCPU.dir
+/home/sunqianqi/MatMul/build/MatMulOnCPU/CMakeFiles/edit_cache.dir
+/home/sunqianqi/MatMul/build/Common/CMakeFiles/rebuild_cache.dir
+/home/sunqianqi/MatMul/build/Common/CMakeFiles/Common.dir
+/home/sunqianqi/MatMul/build/Common/CMakeFiles/edit_cache.dir

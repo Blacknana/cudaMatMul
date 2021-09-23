@@ -22,15 +22,15 @@ void myMatMulOnCPU(float* M, float* N, float* P, int width)
         {
             sum = 0;
             for (int k = 0; k < width; k++)
-                sum += M[i * width + k] * N[k * width + j];
-            P[i * width + j] = sum;
+                sum += M[k * width + i] * N[j * width + k];
+            P[j * width + i] = sum;
         }
 }
 
 int myMatCmp(float* M, float* N, int size)
 {
     for (int i = 0; i < size; i++)
-        if (fabs(M[i] - N[i]) >= 1e-3)
+        if (fabs(M[i] - N[i]) >= 1e-2)
             return 1;
     return 0;
 }

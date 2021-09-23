@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMatMulOnCPU.a CMakeFiles/MatMulOnCPU.dir/MatMulOnCPU.cpp.o
+/usr/bin/ranlib libMatMulOnCPU.a

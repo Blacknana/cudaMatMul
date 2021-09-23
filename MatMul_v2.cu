@@ -1,5 +1,6 @@
-﻿#include "cuda_runtime.h"
+#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "cublas_v2.h"
 #include <stdio.h>
 #include <iostream>
 #include "Common.cuh"
@@ -8,17 +9,6 @@ using namespace std;
 
 const int Row = 1024;
 const int Col = 1024;
-
-__global__ void myMatMulOnGPU(float* M, float* N, float* P, int width)
-{
-    int i = threadIdx.x + blockDim.x * blockIdx.x;
-    int j = threadIdx.y + blockDim.y * blockIdx.y;
-
-    float sum = 0;
-    for (int k = 0; k < width; k++)
-        sum += M[k * width + i] * N[j * width + k];
-    P[j * width + i] = sum;
-}
 
 int main()
 {
@@ -31,38 +21,36 @@ int main()
     myMatMulOnCPU(A, B, C_ref, Col);
 
 
+    myCudaDetermineGPU();
+    cublasHandle_t handle = 0;
+    float alpha = 1, beta = 0;
     //malloc device memory
     float* d_dataA, * d_dataB, * d_dataC;
-    myCudaDetermineGPU();
+    CHECK_CUBLAS(cublasCreate(&handle));
     CHECK(cudaMalloc((void**)&d_dataA, sizeof(float) * Row * Col));
     CHECK(cudaMalloc((void**)&d_dataB, sizeof(float) * Row * Col));
     CHECK(cudaMalloc((void**)&d_dataC, sizeof(float) * Row * Col));
-    CHECK(cudaMemcpy(d_dataA, A, sizeof(float) * Row * Col, cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(d_dataB, B, sizeof(float) * Row * Col, cudaMemcpyHostToDevice));
+    CHECK_CUBLAS(cublasSetMatrix(Row, Col, sizeof(float), A, Row, d_dataA, Row));
+    CHECK_CUBLAS(cublasSetMatrix(Row, Col, sizeof(float), B, Row, d_dataB, Row));
 
     //init timing
     cudaEvent_t start, stop;
     CHECK(cudaEventCreate(&start));
     CHECK(cudaEventCreate(&stop));
 
-    //init block and grid dim
-    dim3 threadPerBlock(16, 16);
-    dim3 blockNumber((Col + threadPerBlock.x - 1) / threadPerBlock.x, (Row + threadPerBlock.y - 1) / threadPerBlock.y);
-    printf("Block(%d,%d)   Grid(%d,%d).\n", threadPerBlock.x, threadPerBlock.y, blockNumber.x, blockNumber.y);
-
     //warm up
     for (int i = 0; i < 10; i++)
-        myMatMulOnGPU << <blockNumber, threadPerBlock >> > (d_dataA, d_dataB, d_dataC, Col);
-    CHECK(cudaGetLastError());
+        CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, Row, Col, Col,
+            &alpha, d_dataA, Row, d_dataB, Row, &beta, d_dataC, Row));
 
     CHECK(cudaEventRecord(start, 0));
-    myMatMulOnGPU << <blockNumber, threadPerBlock >> > (d_dataA, d_dataB, d_dataC, Col);
-    CHECK(cudaGetLastError());
+    CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, Row, Col, Col,
+        &alpha, d_dataA, Row, d_dataB, Row, &beta, d_dataC, Row));
     CHECK(cudaEventRecord(stop, 0));
     CHECK(cudaEventSynchronize(stop));
 
     //check result
-    CHECK(cudaMemcpy(C, d_dataC, sizeof(float) * Row * Col, cudaMemcpyDeviceToHost));
+    CHECK_CUBLAS(cublasGetMatrix(Row, Col, sizeof(float), d_dataC, Row, C, Row));
     if (myMatCmp(C, C_ref, Row * Col))
     {
         printf("Error: Wrong result!\n");
@@ -82,6 +70,7 @@ int main()
     CHECK(cudaFree(d_dataC));
     CHECK(cudaEventDestroy(start));
     CHECK(cudaEventDestroy(stop));
+    CHECK_CUBLAS(cublasDestroy(handle));
 
     return 0;
 }
