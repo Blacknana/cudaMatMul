@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-project(MUL_MATRIX LANGUAGES CXX CUDA)
+project(MAT_MUL LANGUAGES CXX CUDA)
 
 include_directories ("${PROJECT_SOURCE_DIR}/MatMulOnCPU"
                      "${PROJECT_SOURCE_DIR}/Common")
