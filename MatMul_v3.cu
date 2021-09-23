@@ -1,4 +1,4 @@
-﻿#include "cuda_runtime.h"
+#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <stdio.h>
 #include <iostream>
@@ -12,13 +12,31 @@ const int Blocksize = 32;
 
 __global__ void myMatMulOnGPU(float* M, float* N, float* P, int width)
 {
-    int i = threadIdx.x + blockDim.x * blockIdx.x;
-    int j = threadIdx.y + blockDim.y * blockIdx.y;
+    int blockRow = blockIdx.x;
+    int blockCol = blockIdx.y;
+    int row = threadIdx.x;
+    int col = threadIdx.y;
 
     float sum = 0;
-    for (int k = 0; k < width; k++)
-        sum += M[k * width + i] * N[j * width + k];
-    P[j * width + i] = sum;
+
+    for (int i = 0; i < (width / Blocksize); i++) {
+        __shared__ float Msub[Blocksize * Blocksize];
+        __shared__ float Nsub[Blocksize * Blocksize];
+        Msub[col * Blocksize + row] = M[(i * Blocksize + col) * width + (blockRow * Blocksize + row)];
+        Nsub[col * Blocksize + row] = N[(blockCol * Blocksize + col) * width + (i * Blocksize + row)];
+
+        // make sure that the sub-matrices are loaded
+        __syncthreads();
+
+        for (int j = 0; j < Blocksize; j++)
+            sum += Msub[j * Blocksize + row] * Nsub[col * Blocksize + j];
+        
+        // make sure that preceding computation is done
+        // before the next iteration
+        __syncthreads();
+    }
+
+    P[(blockCol * Blocksize + col) * width + (blockRow * Blocksize + row)] = sum;
 }
 
 int main()
