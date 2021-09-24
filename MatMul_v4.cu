@@ -1,4 +1,4 @@
-﻿#include "cuda_runtime.h"
+#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <stdio.h>
 #include <iostream>
@@ -12,13 +12,48 @@ const int Blocksize = 32;
 
 __global__ void myMatMulOnGPU(float* M, float* N, float* P, int width)
 {
-    int i = threadIdx.x + blockDim.x * blockIdx.x;
-    int j = threadIdx.y + blockDim.y * blockIdx.y;
+    int blockRow = blockIdx.x;
+    int blockCol = blockIdx.y;
+    const int blockstride = Blocksize * 2;
+    int row = threadIdx.x;
+    int col = threadIdx.y;
 
-    float sum = 0;
-    for (int k = 0; k < width; k++)
-        sum += M[k * width + i] * N[j * width + k];
-    P[j * width + i] = sum;
+    float sum[4] = {0, 0, 0, 0};
+
+    for (int i = 0; i < (width / blockstride); i++) {
+
+        __shared__ float Msub[blockstride * blockstride];
+        __shared__ float Nsub[blockstride * blockstride];
+
+        int M_loc = (i * blockstride + col * 2 + row * 4 / blockstride) * width + (blockRow * blockstride + row * 4 % blockstride);
+        int N_loc = (blockCol * blockstride + col * 2 + row * 4 / blockstride) * width + (i * blockstride + row * 4 % blockstride);
+        int MNsub_loc = (col * 2) * blockstride + row * 4;
+
+        for (int j = 0; j < 4; j++)
+            Msub[MNsub_loc + j] = M[M_loc + j];
+        for (int j = 0; j < 4; j++)
+            Nsub[MNsub_loc + j] = N[N_loc + j];
+
+        // make sure that the sub-matrices are loaded
+        __syncthreads();
+
+        for (int j = 0; j < blockstride; j++)
+        {
+            sum[0] += Msub[j * blockstride + row] * Nsub[col * blockstride + j];
+            sum[1] += Msub[j * blockstride + row + Blocksize] * Nsub[col * blockstride + j];
+            sum[2] += Msub[j * blockstride + row] * Nsub[(col + Blocksize) * blockstride + j];
+            sum[3] += Msub[j * blockstride + row + Blocksize] * Nsub[(col + Blocksize) * blockstride + j];
+        }
+        
+        // make sure that preceding computation is done
+        // before the next iteration
+        __syncthreads();
+    }
+
+    P[(blockCol * blockstride + col) * width + (blockRow * blockstride + row)] = sum[0];
+    P[(blockCol * blockstride + col) * width + (blockRow * blockstride + row + Blocksize)] = sum[1];
+    P[(blockCol * blockstride + col + Blocksize) * width + (blockRow * blockstride + row)] = sum[2];
+    P[(blockCol * blockstride + col + Blocksize) * width + (blockRow * blockstride + row + Blocksize)] = sum[3];
 }
 
 int main()
@@ -48,7 +83,7 @@ int main()
 
     //init block and grid dim
     dim3 threadPerBlock(Blocksize, Blocksize);
-    dim3 blockNumber((Col + threadPerBlock.x - 1) / threadPerBlock.x, (Row + threadPerBlock.y - 1) / threadPerBlock.y);
+    dim3 blockNumber((Col + threadPerBlock.x - 1) / (2 * threadPerBlock.x), (Row + threadPerBlock.y - 1) / (2 * threadPerBlock.y));
     printf("Block(%d,%d)   Grid(%d,%d).\n", threadPerBlock.x, threadPerBlock.y, blockNumber.x, blockNumber.y);
 
     //warm up

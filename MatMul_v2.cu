@@ -24,6 +24,7 @@ int main()
     myCudaDetermineGPU();
     cublasHandle_t handle = 0;
     float alpha = 1, beta = 0;
+    
     //malloc device memory
     float* d_dataA, * d_dataB, * d_dataC;
     CHECK_CUBLAS(cublasCreate(&handle));
@@ -47,7 +48,6 @@ int main()
     CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, Row, Col, Col,
         &alpha, d_dataA, Row, d_dataB, Row, &beta, d_dataC, Row));
     CHECK(cudaEventRecord(stop, 0));
-    CHECK(cudaEventSynchronize(stop));
 
     //check result
     CHECK_CUBLAS(cublasGetMatrix(Row, Col, sizeof(float), d_dataC, Row, C, Row));

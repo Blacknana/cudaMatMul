@@ -20,3 +20,7 @@ target_link_libraries(MatMul_v2 PUBLIC MatMulOnCPU Common ${CUBLAS_LIBRARIES})
 add_executable(MatMul_v3 MatMul_v3.cu)
 set_target_properties(MatMul_v3 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(MatMul_v3 PUBLIC MatMulOnCPU Common)
+
+add_executable(MatMul_v4 MatMul_v4.cu)
+set_target_properties(MatMul_v4 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+target_link_libraries(MatMul_v4 PUBLIC MatMulOnCPU Common)

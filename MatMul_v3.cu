@@ -78,7 +78,6 @@ int main()
     myMatMulOnGPU << <blockNumber, threadPerBlock >> > (d_dataA, d_dataB, d_dataC, Col);
     CHECK(cudaGetLastError());
     CHECK(cudaEventRecord(stop, 0));
-    CHECK(cudaEventSynchronize(stop));
 
     //check result
     CHECK(cudaMemcpy(C, d_dataC, sizeof(float) * Row * Col, cudaMemcpyDeviceToHost));
