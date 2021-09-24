@@ -25,6 +25,7 @@ __global__ void myMatMulOnGPU(float* M, float* N, float* P, int width)
         __shared__ float Msub[blockstride * blockstride];
         __shared__ float Nsub[blockstride * blockstride];
 
+        // each thread get 4 element(128bit) from M and N continuously
         int M_loc = (i * blockstride + col * 2 + row * 4 / blockstride) * width + (blockRow * blockstride + row * 4 % blockstride);
         int N_loc = (blockCol * blockstride + col * 2 + row * 4 / blockstride) * width + (i * blockstride + row * 4 % blockstride);
         int MNsub_loc = (col * 2) * blockstride + row * 4;
@@ -37,6 +38,8 @@ __global__ void myMatMulOnGPU(float* M, float* N, float* P, int width)
         // make sure that the sub-matrices are loaded
         __syncthreads();
 
+        // each thread compute 4 element
+        // i.e. (x, y), (x + Blocksize, y), (x, y + Blocksize), (x + Blocksize, y + Blocksize)
         for (int j = 0; j < blockstride; j++)
         {
             sum[0] += Msub[j * blockstride + row] * Nsub[col * blockstride + j];

@@ -22,12 +22,15 @@ __global__ void myMatMulOnGPU(float* M, float* N, float* P, int width)
     for (int i = 0; i < (width / Blocksize); i++) {
         __shared__ float Msub[Blocksize * Blocksize];
         __shared__ float Nsub[Blocksize * Blocksize];
+
+        // each thread get 1 element from M and N
         Msub[col * Blocksize + row] = M[(i * Blocksize + col) * width + (blockRow * Blocksize + row)];
         Nsub[col * Blocksize + row] = N[(blockCol * Blocksize + col) * width + (i * Blocksize + row)];
 
         // make sure that the sub-matrices are loaded
         __syncthreads();
 
+        // each thread compute 1 result
         for (int j = 0; j < Blocksize; j++)
             sum += Msub[j * Blocksize + row] * Nsub[col * Blocksize + j];
         
