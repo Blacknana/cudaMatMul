@@ -9,18 +9,18 @@ add_subdirectory(MatMulOnCPU)
 add_subdirectory(Common)
 
 add_executable(MatMul_v1 MatMul_v1.cu)
-set_target_properties(MatMul_v1 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(MatMul_v1 PUBLIC MatMulOnCPU Common)
 
 find_package(cuBLAS)
 add_executable(MatMul_v2 MatMul_v2.cu)
-set_target_properties(MatMul_v2 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(MatMul_v2 PUBLIC MatMulOnCPU Common ${CUBLAS_LIBRARIES})
 
 add_executable(MatMul_v3 MatMul_v3.cu)
-set_target_properties(MatMul_v3 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(MatMul_v3 PUBLIC MatMulOnCPU Common)
 
 add_executable(MatMul_v4 MatMul_v4.cu)
-set_target_properties(MatMul_v4 PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(MatMul_v4 PUBLIC MatMulOnCPU Common)
+
+set_target_properties(MatMul_v1 MatMul_v2 MatMul_v3 MatMul_v4 
+                      PROPERTIES CUDA_SEPARABLE_COMPILATION ON
+                      CUDA_ARCHITECTURES "70;70")
