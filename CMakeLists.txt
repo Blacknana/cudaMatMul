@@ -21,6 +21,6 @@ target_link_libraries(MatMul_v3 PUBLIC MatMulOnCPU Common)
 add_executable(MatMul_v4 MatMul_v4.cu)
 target_link_libraries(MatMul_v4 PUBLIC MatMulOnCPU Common)
 
-set_target_properties(MatMul_v1 MatMul_v2 MatMul_v3 MatMul_v4 
+set_target_properties(MatMul_v1 MatMul_v2 MatMul_v3 MatMul_v4
                       PROPERTIES CUDA_SEPARABLE_COMPILATION ON
                       CUDA_ARCHITECTURES "70;70")

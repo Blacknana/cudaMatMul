@@ -53,10 +53,10 @@ __global__ void myMatMulOnGPU(float* M, float* N, float* P, int width)
         // i.e. (x, y), (x + Block_x, y), (x, y + Block_y), (x + Block_x, y + Block_y)
         for (int j = 0; j < banksize; j++)
         {
-            sum[0] += Msub[write_idx][j * blockRowStride + row] * Nsub[load_idx][col * banksize + j];
-            sum[1] += Msub[write_idx][j * blockRowStride + row + Block_x] * Nsub[load_idx][col * banksize + j];
-            sum[2] += Msub[write_idx][j * blockRowStride + row] * Nsub[load_idx][(col + Block_y) * banksize + j];
-            sum[3] += Msub[write_idx][j * blockRowStride + row + Block_x] * Nsub[load_idx][(col + Block_y) * banksize + j];
+            sum[0] += Msub[load_idx][j * blockRowStride + row] * Nsub[load_idx][col * banksize + j];
+            sum[1] += Msub[load_idx][j * blockRowStride + row + Block_x] * Nsub[load_idx][col * banksize + j];
+            sum[2] += Msub[load_idx][j * blockRowStride + row] * Nsub[load_idx][(col + Block_y) * banksize + j];
+            sum[3] += Msub[load_idx][j * blockRowStride + row + Block_x] * Nsub[load_idx][(col + Block_y) * banksize + j];
         }
     }
 
